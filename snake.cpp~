@@ -1,0 +1,284 @@
+#include <iostream>
+using namespace std;
+#include "snake.h"
+
+
+// -------------------------------------------------------------------------
+// 	snake.cpp:	 SNAKE IMPLEMENTATION
+//    The following section contains the member functions for a Snake
+//---------------------------------------------------------------------------
+
+//
+// init -- set initial default values for a Snake 
+//   args: none
+//   rets: nothing
+//   mods: modifies the snake by setting its member variables
+//
+void Snake::init()
+{
+	score    = 0;
+	alive    = true;
+	for (int i = 0 ; i < ROWS ; i++){
+		for (int j = 0; j < COLS ; j++){
+			bodies[i][j] = ' ';
+		}
+	}
+}
+//is_alive-checks to see if snake has died
+//args:none
+//rets: boolean 
+//note: will always return alive for phase 0
+bool Snake::is_alive(){
+	if (energy_units == 0){
+		alive = false;
+	}
+	if (bodies[rpos][cpos] == body){
+		alive = false;
+	}
+	return alive;
+}
+//set_controls-used in set_up_snake to use user input to set custom controls
+//args: int left turn key, int right turn key, int forward key
+//rets: void, stores controls
+void Snake::set_controls(int l, int r, int f){
+	clockwise_turn_key = r;
+	counterclockwise_turn_key = l;
+       	move_key = f;
+}
+//draw_head_on_board-puts the snake head in the board at its current location
+//args: 2d array of chars
+//rets: void
+void Snake::draw_head_on_board(char b[][COLS]){
+	b[rpos][cpos] = direction ;
+}
+//set_body-sets the snake's body equal to the user input in set_up_snake
+//args:char body
+//rets:void
+void Snake::set_body(char b){
+	body = b ;
+}
+char Snake::get_direction(){
+	return direction;
+}
+//set_name-sets the snake's name to the user input in set_up_snake
+//args:string name
+//rets: void
+void Snake::set_name(string n){
+	name = n;
+}
+//set_pos-sets the initial position and direction of the snake
+//args:int row, int col, char direction
+//rets: void
+void Snake::set_pos(int r,int c, char d){
+	rpos = r;
+	cpos = c;
+	direction = d;
+}
+//set_EU-sets the energy_units value of the snake to the argument
+//args:int energy units
+//rets:void
+void Snake::set_EU(int eu){
+	energy_units = eu ;
+}
+//get_name-returns the name of the snake
+//args:none
+//return: string name
+string Snake::get_name(){
+	return name;
+}
+//get_score-returns the score of the snake
+//args:none
+//rets:int score
+int Snake::get_score(){
+        return score;
+}
+//get_eu-returns the snake's current energy_units value
+//args:none
+//rets:int energy_units
+int Snake::get_eu(){
+	return energy_units;
+}
+//print_status-prints the current stats of the snake including its
+//energy units, score, and the keys that control it
+//args:none
+//rets:void, couts status
+void Snake::print_status(){
+	cout << name << " EU: " << energy_units
+	     << "  Score: " << score
+	     << "  Keys: " <<  counterclockwise_turn_key
+	     << clockwise_turn_key << move_key
+	     << endl ;
+}
+//process_key-calls a method based on the getachar() input
+//either turns or moves the snake
+//args:char input, 2d array of chars
+//rets:boolean, is always true once it finishes 
+bool Snake::process_key(char input, char b[][COLS]){
+	bool is_key_used = false;	
+	if (input == move_key){
+		is_key_used = true;
+		move(b);
+	}
+	if (input == clockwise_turn_key){
+		is_key_used = true;
+		clockwise_turn();
+	}
+	if (input == counterclockwise_turn_key){
+		counterclockwise_turn();
+		is_key_used = true;
+	}
+
+	return is_key_used ;
+}
+//move-moves the snake one space, checks to see if it needs to be wraped,
+//draws the tail after it has moved
+//args: 2d array of chars
+//rets:void 
+void Snake::move(char b [][COLS]){
+	lrpos = rpos;
+	lcpos = cpos;
+    	if ((check_col_pos()) and (check_row_pos())){
+		if (direction == UP){
+			rpos--;
+		}
+		if (direction == DOWN){
+			rpos++;
+		}
+		if (direction == LEFT){
+			cpos--;
+		}
+		if (direction == RIGHT){
+			cpos++;
+		}
+	}
+	score++;
+	energy_units--;
+	get_food(b);
+	draw_body(b);
+	bodies[lrpos][lcpos] = body ;
+}
+//clock_turn-turns the snake head clockwise
+//args:none
+//rets:void
+void Snake::clockwise_turn(){
+	if (direction == UP){
+		direction = RIGHT;
+	}
+	else if (direction == RIGHT){
+		direction = DOWN;
+	}
+	else if (direction == DOWN){
+		direction = LEFT;
+	}
+	else if (direction == LEFT){
+		direction = UP;
+	}
+}
+//counter_turn-turns the snake head counterclockwise
+//args:none
+//rets:void
+void Snake::counterclockwise_turn(){
+      	if (direction == UP){
+		direction = LEFT;
+	}
+	else if (direction == RIGHT){
+		direction = UP;
+	}
+	else if (direction == DOWN){
+		direction = RIGHT;
+	}
+	else if (direction == LEFT){
+		direction = DOWN;
+	}
+}
+//draw_body- draws the snakes body using the last pos of the snake head
+//implemented in move
+//args:2d array of chars
+//rets:void
+void Snake::draw_body(char b[][COLS]){
+	b[lrpos][lcpos] = body;
+}
+//check_row_pos-checks to see if the snake's row position is ok, returns
+//true if it does not need to wrap, wraps the snake and returns false if it 
+//needs to
+//args:none
+//rets: boolean
+bool Snake::check_row_pos(){
+	bool okpos = true;
+	if (rpos == 1){
+		if (direction == UP){
+			rpos = (ROWS-2);
+			okpos = false;
+		}
+	}
+	if (rpos == (ROWS-2)){
+		if (direction == DOWN){
+			rpos = 1;
+			okpos = false;
+		}
+	}
+	return okpos;
+}
+//check_col_pos-checks to see if the snake's col position is ok, returns
+//true if it does not need to wrap, wraps the snake and returns false if it
+//needs to
+//args:none
+//rets:boolean
+bool Snake::check_col_pos(){
+	bool okpos = true;
+	if(cpos == 1){
+		if (direction == LEFT){
+			cpos = (COLS-2);
+			okpos = false;
+		}
+	}
+	if(cpos == (COLS-2)){
+		if (direction == RIGHT){
+			cpos = 1;
+			okpos = false;
+		}
+	}
+	return okpos;
+}
+// get_food: checks to see if the snake has landed on a snack and if it has
+//	     the snake receives points and a new snack is made
+// args: 2d array of chars
+// rets: void-searches for food
+void Snake::get_food(char b[][COLS]){
+       	if (b[rpos][cpos] == EGG_SYM){	
+       		energy_units += EGG_VAL;
+	       	place_snack(EGG_SYM, b);
+       	}
+	if (b[rpos][cpos] == BUG_SYM){
+	        energy_units += BUG_VAL;
+		place_snack(BUG_SYM, b);
+		}
+}
+//
+// setup_snake -- initialize a snake for the game
+// args: the snake number, its row, col, dir, and initial EU
+// rets: void-sets up the snake 
+void Snake:: setup_snake(int num, int r, int c, char d, int eu )
+{
+	string	n;
+	char	lkey,rkey,fkey, body;
+
+	init();			// set any initial default values
+	set_EU(eu);			// set initial energy
+	set_pos(r, c, d);		// set pos and direction
+
+	// now customize for the player
+	cout << "Welcome, player " << num << endl;
+	cout << "Name? ";
+	cin  >> n;
+	set_name(n);
+
+	cout << "Body character? ";
+	cin  >> body;
+	set_body(body);
+
+	cout << "Keys for left, right, fwd? ";
+	cin  >> lkey >> rkey >> fkey ;
+	set_controls(lkey, rkey, fkey);
+
+}
